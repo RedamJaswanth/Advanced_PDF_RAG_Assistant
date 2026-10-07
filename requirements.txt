@@ -1,0 +1,14 @@
+langchain
+langchain-community
+langchain-google-genai
+langchain-chroma
+langchain-huggingface
+langchain-text-splitters
+chromadb
+sentence-transformers
+pypdf
+python-dotenv
+streamlit
+fastapi
+uvicorn
+langchain-ollama
