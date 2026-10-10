@@ -1,188 +1,242 @@
+"""
+app.py
+------
+Streamlit frontend for the Advanced PDF RAG Assistant.
+
+Run with:
+    streamlit run app.py
+"""
+
+from __future__ import annotations
+
+import logging
+
 import streamlit as st
 
-from src.rag_pipeline import create_rag_pipeline, ask_question
-
-
-# --------------------------------------------------
-# Page Configuration
-# --------------------------------------------------
-
+# ── Page config (must be the very first Streamlit call) ───────────────────────
 st.set_page_config(
     page_title="Advanced PDF RAG Assistant",
     page_icon="📚",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
+from src.rag_pipeline import create_rag_pipeline, ask_question  # noqa: E402
 
-# --------------------------------------------------
-# Custom Styling
-# --------------------------------------------------
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s – %(message)s",
+    datefmt="%H:%M:%S",
+)
 
+# ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown(
     """
     <style>
-        .main-title {
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
+    /* ── Sidebar — purple-indigo gradient ── */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(160deg, #4c1d95 0%, #312e81 40%, #1e1b4b 100%) !important;
+        border-right: 1px solid #6d28d9;
+    }
+    [data-testid="stSidebar"] * { color: #e9d5ff !important; }
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #f0abfc !important;
+        letter-spacing: 0.3px;
+    }
+    [data-testid="stSidebar"] .stDivider { border-color: #6d28d9 !important; opacity: 0.5; }
+    [data-testid="stSidebar"] code {
+        background: rgba(0,0,0,0.35) !important;
+        color: #a5f3fc !important;
+        border: 1px solid #6d28d9 !important;
+        border-radius: 6px;
+    }
+    [data-testid="stSidebar"] .stButton button {
+        background: rgba(109,40,217,0.4) !important;
+        border: 1px solid #7c3aed !important;
+        color: #f0abfc !important;
+        border-radius: 8px;
+    }
+    [data-testid="stSidebar"] .stButton button:hover {
+        background: rgba(124,58,237,0.6) !important;
+    }
+    [data-testid="stSidebar"] .stMetric label,
+    [data-testid="stSidebar"] .stMetric div { color: #c4b5fd !important; }
 
-        .subtitle {
-            font-size: 18px;
-            color: #777;
-            margin-bottom: 30px;
-        }
+    /* ── Source chip ── */
+    .source-chip {
+        display: inline-block;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 20px;
+        padding: 4px 14px;
+        margin: 4px 4px 4px 0;
+        font-size: 13px;
+        color: #93c5fd;
+        font-weight: 500;
+    }
 
-        .source-box {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            margin-bottom: 8px;
-        }
+    /* ── Welcome card ── */
+    .welcome-card {
+        background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+        border: 1px solid #4c1d95;
+        border-radius: 14px;
+        padding: 28px 32px;
+        margin-bottom: 20px;
+    }
+    .welcome-card h2 { color: #c084fc; margin: 0 0 8px 0; }
+    .welcome-card p  { color: #94a3b8; margin: 0; font-size: 15px; }
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-
-# --------------------------------------------------
-# Header
-# --------------------------------------------------
-
-st.markdown(
-    '<div class="main-title">📚 Advanced PDF RAG Assistant</div>',
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    '<div class="subtitle">Ask intelligent questions about your PDF using Retrieval-Augmented Generation.</div>',
-    unsafe_allow_html=True
-)
-
-
-# --------------------------------------------------
-# Sidebar
-# --------------------------------------------------
-
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
+    st.markdown("## 📚 RAG Assistant")
+    st.markdown("Ask intelligent questions about your PDF using local AI — no cloud required.")
+    st.divider()
 
-    st.header("⚙️ RAG System")
+    st.markdown("### ⚙️ System Configuration")
 
-    st.write("**Embedding Model**")
-    st.code("all-MiniLM-L6-v2")
+    st.markdown("**🔤 Embedding Model**")
+    st.code("all-MiniLM-L6-v2", language=None)
 
-    st.write("**Vector Database**")
-    st.code("ChromaDB")
+    st.markdown("**🗄️ Vector Database**")
+    st.code("ChromaDB (local)", language=None)
 
-    st.write("**LLM**")
-    st.code("Qwen2.5:3B")
+    st.markdown("**🤖 Language Model**")
+    st.code("Qwen2.5:3B  (Ollama)", language=None)
 
-    st.write("**Framework**")
-    st.code("LangChain")
+    st.markdown("**🔗 Framework**")
+    st.code("LangChain", language=None)
 
     st.divider()
 
-    if st.button("🗑️ Clear Chat"):
-        st.session_state.messages = []
-        st.rerun()
+    st.markdown("### 📄 Document")
+    st.code("generative_ai_course_notes.pdf", language=None)
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️ Clear Chat", use_container_width=True):
+            st.session_state.messages = []
+            st.rerun()
+    with col2:
+        st.metric("Turns", len(st.session_state.get("messages", [])) // 2)
+
+    st.divider()
+    st.caption("Built with LangChain · ChromaDB · Ollama · Streamlit")
 
 
-# --------------------------------------------------
-# Load RAG Pipeline
-# --------------------------------------------------
+# ── Load RAG pipeline (cached across sessions) ────────────────────────────────
+@st.cache_resource(show_spinner="⚙️ Loading RAG pipeline — this may take a moment...")
+def load_pipeline():
+    """Load and cache the retriever and LLM for the session lifetime."""
+    try:
+        return create_rag_pipeline()
+    except FileNotFoundError as exc:
+        return exc
+    except Exception as exc:
+        return exc
 
-@st.cache_resource
-def load_rag_pipeline():
 
-    return create_rag_pipeline()
+pipeline = load_pipeline()
+
+# ── Handle pipeline load errors ───────────────────────────────────────────────
+if isinstance(pipeline, FileNotFoundError):
+    st.error(
+        f"**📄 PDF not found.**\n\n"
+        f"{pipeline}\n\n"
+        "Place your PDF in `data/pdfs/` and update `PDF_PATH` in `src/document_loader.py`."
+    )
+    st.stop()
+
+if isinstance(pipeline, Exception):
+    st.error(
+        f"**⚠️ Failed to initialise RAG pipeline.**\n\n"
+        f"`{pipeline}`\n\n"
+        "Make sure Ollama is running: `ollama serve`"
+    )
+    st.stop()
+
+retriever, llm = pipeline
 
 
-retriever, llm = load_rag_pipeline()
+# ── Header ────────────────────────────────────────────────────────────────────
+st.markdown(
+    """
+    <div class="welcome-card">
+        <h2>📚 Advanced PDF RAG Assistant</h2>
+        <p>
+            Ask any question about your document. The assistant retrieves the most
+            relevant passages and generates a grounded, accurate answer using a
+            fully local AI stack — your data never leaves your machine.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
-# --------------------------------------------------
-# Chat History
-# --------------------------------------------------
-
+# ── Chat history init ─────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
-
     st.session_state.messages = []
 
 
-# --------------------------------------------------
-# Display Previous Messages
-# --------------------------------------------------
-
+# ── Render previous messages ──────────────────────────────────────────────────
 for message in st.session_state.messages:
-
     with st.chat_message(message["role"]):
-
         st.markdown(message["content"])
 
 
-# --------------------------------------------------
-# User Input
-# --------------------------------------------------
-
-question = st.chat_input(
-    "Ask something about your PDF..."
-)
-
-
-# --------------------------------------------------
-# Process Question
-# --------------------------------------------------
+# ── Chat input ────────────────────────────────────────────────────────────────
+question = st.chat_input("Ask something about your PDF…")
 
 if question:
-
-    # Display user message
+    # Show user message
     with st.chat_message("user"):
-
         st.markdown(question)
 
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": question
-        }
-    )
+    st.session_state.messages.append({"role": "user", "content": question})
 
-
-    # Generate answer
+    # Generate and display assistant response
     with st.chat_message("assistant"):
-
-        with st.spinner("🔎 Searching the document..."):
-
-          answer, documents, sources = ask_question(
-    question,
-    retriever,
-    llm,
-    st.session_state.messages
-)
+        with st.spinner("🔎 Searching the document…"):
+            answer, documents, sources = ask_question(
+                question=question,
+                retriever=retriever,
+                llm=llm,
+                chat_history=st.session_state.messages,
+            )
 
         st.markdown(answer)
 
-
-        # --------------------------------------------------
-        # Sources
-        # --------------------------------------------------
-
+        # ── Sources ───────────────────────────────────────────────────────────
         if sources:
+            st.markdown("---")
+            st.markdown("**📌 Sources**")
+            chips = " ".join(
+                f'<span class="source-chip">📄 {s}</span>' for s in sources
+            )
+            st.markdown(chips, unsafe_allow_html=True)
 
-            st.markdown("### 📚 Sources")
-
-            for source in sources:
-
-                st.markdown(
-                    f'<div class="source-box">📄 {source}</div>',
-                    unsafe_allow_html=True
-                )
-
+        # ── Retrieved context (expandable) ────────────────────────────────────
+        if documents:
+            with st.expander(f"🔍 View Retrieved Context ({len(documents)} chunk(s))", expanded=False):
+                for i, doc in enumerate(documents, 1):
+                    page = doc.metadata.get("page", "?")
+                    st.markdown(f"**Chunk {i} — Page {int(page) + 1 if page != '?' else '?'}**")
+                    st.markdown(
+                        f"<div style='background:#1e293b;padding:12px;border-radius:8px;"
+                        f"font-size:13px;color:#cbd5e1'>{doc.page_content}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    if i < len(documents):
+                        st.markdown("---")
 
     # Save assistant response
-    st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": answer
-        }
-    )
+    st.session_state.messages.append({"role": "assistant", "content": answer})
