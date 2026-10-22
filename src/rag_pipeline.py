@@ -144,11 +144,24 @@ def ask_question(
     # ── Generate answer ────────────────────────────────────────────────────────
     logger.info("Generating answer...")
     response = llm.invoke(prompt)
-    answer: str = (
-        response.content
-        if isinstance(response.content, str)
-        else str(response.content)
-    )
+    raw_content = response.content
+    if isinstance(raw_content, str):
+        answer = raw_content
+    elif isinstance(raw_content, list):
+        parts = []
+        for item in raw_content:
+            if isinstance(item, dict) and "text" in item:
+                parts.append(str(item["text"]))
+            elif isinstance(item, str):
+                parts.append(item)
+            elif hasattr(item, "text"):
+                parts.append(str(getattr(item, "text")))
+            else:
+                parts.append(str(item))
+        answer = "".join(parts) if parts else str(raw_content)
+    else:
+        answer = str(raw_content)
+
     logger.info("Answer generated (%d chars).", len(answer))
 
     # ── Extract & deduplicate source page numbers ──────────────────────────────

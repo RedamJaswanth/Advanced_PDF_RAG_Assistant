@@ -15,7 +15,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-GEMINI_MODEL: str = "gemini-2.5-flash"
+# gemini-3.8-flash is the current recommended production flash model by Google
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 TEMPERATURE: float = 0.2  # Lower = more factual, grounded answers
 
 
@@ -32,9 +33,9 @@ def get_api_key() -> str | None:
 
         if hasattr(st, "secrets"):
             if "GEMINI_API_KEY" in st.secrets:
-                return st.secrets["GEMINI_API_KEY"]
+                return str(st.secrets["GEMINI_API_KEY"])
             if "GOOGLE_API_KEY" in st.secrets:
-                return st.secrets["GOOGLE_API_KEY"]
+                return str(st.secrets["GOOGLE_API_KEY"])
     except Exception:
         pass
 
@@ -42,7 +43,7 @@ def get_api_key() -> str | None:
 
 
 def create_llm(
-    model: str = GEMINI_MODEL,
+    model: str | None = None,
     temperature: float = TEMPERATURE,
     api_key: str | None = None,
 ) -> ChatGoogleGenerativeAI:
@@ -51,8 +52,8 @@ def create_llm(
 
     Parameters
     ----------
-    model : str
-        Name of the Gemini model to use (default: gemini-2.5-flash).
+    model : str, optional
+        Name of the Gemini model to use (default: gemini-3.8-flash).
     temperature : float
         Sampling temperature (0 = deterministic, 1 = creative).
     api_key : str, optional
@@ -70,9 +71,10 @@ def create_llm(
             "environment variables (.env) or Streamlit Secrets."
         )
 
-    logger.info("Connecting to Google Gemini model '%s'", model)
+    chosen_model = model or os.getenv("GEMINI_MODEL") or GEMINI_MODEL
+    logger.info("Connecting to Google Gemini model '%s'", chosen_model)
     llm = ChatGoogleGenerativeAI(
-        model=model,
+        model=chosen_model,
         temperature=temperature,
         google_api_key=resolved_key,
     )

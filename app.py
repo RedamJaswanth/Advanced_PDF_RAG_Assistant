@@ -2,7 +2,7 @@
 app.py
 ------
 Streamlit frontend for the Advanced PDF RAG Assistant.
-Powered by Google Gemini 2.5 Flash, HuggingFace embeddings, and ChromaDB.
+Powered by Google Gemini 3.8 Flash, HuggingFace embeddings, and ChromaDB.
 
 Run locally:
     streamlit run app.py
@@ -138,7 +138,7 @@ with st.sidebar:
     st.code("ChromaDB", language=None)
 
     st.markdown("**🤖 Language Model**")
-    st.code("gemini-2.5-flash (Google GenAI)", language=None)
+    st.code("gemini-3.8-flash (Google GenAI)", language=None)
 
     st.markdown("**🔗 Framework**")
     st.code("LangChain", language=None)
@@ -223,7 +223,7 @@ st.markdown(
         <p>
             Ask intelligent questions about <strong>{active_doc_name}</strong>.
             The assistant searches the indexed document using semantic embeddings
-            and synthesises accurate, grounded responses with <strong>Google Gemini 2.5 Flash</strong>.
+            and synthesises accurate, grounded responses with <strong>Google Gemini 3.8 Flash</strong>.
         </p>
     </div>
     """,
