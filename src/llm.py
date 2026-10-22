@@ -1,59 +1,42 @@
 """
 llm.py
 ------
-Instantiates the local Ollama language model used for answer generation.
-Ollama must be running locally with the target model pulled.
+Creates the Gemini language model used for answer generation.
+The API key is read from the GEMINI_API_KEY environment variable
+(set as a secret on Streamlit Cloud, or in your local .env file).
 """
 
 from __future__ import annotations
 
 import logging
+import os
 
-from langchain_ollama import ChatOllama
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-OLLAMA_MODEL: str = "qwen2.5:3b"
-OLLAMA_TEMPERATURE: float = 0.2   # Lower = more factual, less creative
-OLLAMA_BASE_URL: str = "http://localhost:11434"
+GEMINI_MODEL: str = "gemini-2.5-flash"
+GEMINI_TEMPERATURE: float = 0.2   # Lower = more factual, less creative
 
 
 def create_llm(
-    model: str = OLLAMA_MODEL,
-    temperature: float = OLLAMA_TEMPERATURE,
-    base_url: str = OLLAMA_BASE_URL,
-) -> ChatOllama:
-    """
-    Create and return a ChatOllama LLM instance.
+    model: str = GEMINI_MODEL,
+    temperature: float = GEMINI_TEMPERATURE,
+) -> ChatGoogleGenerativeAI:
+    """Create and return a Gemini chat model."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "GEMINI_API_KEY is not set. Add it to your .env file "
+            "or to the Streamlit Cloud secrets."
+        )
 
-    Prerequisites
-    -------------
-    1. Ollama must be installed: https://ollama.com/download
-    2. The target model must be pulled:
-           ollama pull qwen2.5:3b
-    3. Ollama must be running:
-           ollama serve
-
-    Parameters
-    ----------
-    model : str
-        Name of the Ollama model to use.
-    temperature : float
-        Sampling temperature (0 = deterministic, 1 = creative).
-    base_url : str
-        Ollama server URL.
-
-    Returns
-    -------
-    ChatOllama
-        A LangChain-compatible chat model instance.
-    """
-    logger.info("Connecting to Ollama model '%s' at %s", model, base_url)
-    llm = ChatOllama(
+    logger.info("Connecting to Gemini model '%s'", model)
+    llm = ChatGoogleGenerativeAI(
         model=model,
         temperature=temperature,
-        base_url=base_url,
+        google_api_key=api_key,
     )
-    logger.info("Ollama LLM ready.")
+    logger.info("Gemini LLM ready.")
     return llm
