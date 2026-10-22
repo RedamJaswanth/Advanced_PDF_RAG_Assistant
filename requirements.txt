@@ -1,29 +1,29 @@
 # Advanced PDF RAG Assistant
 # ============================================
-# Local RAG stack — no cloud API required
+# RAG stack using the Gemini API for answers
 
-# ── LangChain core ────────────────────────────────────────────────────────────
+# ── LangChain core ──
 langchain
 langchain-community
 langchain-core
 langchain-text-splitters
 
-# ── Integrations ──────────────────────────────────────────────────────────────
-langchain-ollama          # Local LLM via Ollama
+# ── Integrations ──
+langchain-google-genai    # Gemini LLM
 langchain-chroma          # ChromaDB vector store
 langchain-huggingface     # HuggingFace embeddings
 
-# ── Vector store ──────────────────────────────────────────────────────────────
+# ── Vector store ──
 chromadb
 
-# ── Embeddings ────────────────────────────────────────────────────────────────
+# ── Embeddings ──
 sentence-transformers
 
-# ── PDF loading ───────────────────────────────────────────────────────────────
+# ── PDF loading ──
 pypdf
 
-# ── Frontend ──────────────────────────────────────────────────────────────────
+# ── Frontend ──
 streamlit
 
-# ── Environment ───────────────────────────────────────────────────────────────
+# ── Environment ──
 python-dotenv
