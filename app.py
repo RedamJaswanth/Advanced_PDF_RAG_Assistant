@@ -115,7 +115,6 @@ with st.sidebar:
 
     if uploaded_file is not None:
         active_doc_name = uploaded_file.name
-        # Persist uploaded file to a temporary location
         temp_dir = Path(tempfile.gettempdir()) / "rag_uploads"
         temp_dir.mkdir(parents=True, exist_ok=True)
         active_pdf_path = temp_dir / uploaded_file.name
@@ -167,12 +166,12 @@ with st.sidebar:
     st.caption("Built with LangChain · Google Gemini · ChromaDB · Streamlit")
 
 
-# ── Load RAG pipeline (cached by document path and file modification time) ────
+# ── Load RAG pipeline (cache invalidated with cache_key) ──────────────────────
 @st.cache_resource(show_spinner="⚙️ Indexing PDF and initialising Gemini pipeline...")
-def load_pipeline(doc_path: str, doc_name: str, api_key: str | None = None):
+def load_pipeline(doc_path: str, doc_name: str, api_key: str | None = None, cache_key: str = "v4_gemini38"):
     """Load and cache the retriever and LLM for the active document."""
     try:
-        return create_rag_pipeline(pdf_path=doc_path, api_key=api_key)
+        return create_rag_pipeline(pdf_path=doc_path, api_key=api_key, model="gemini-3.8-flash")
     except FileNotFoundError as exc:
         return exc
     except Exception as exc:
@@ -190,7 +189,7 @@ if not active_key:
     )
     pipeline = None
 else:
-    pipeline = load_pipeline(active_pdf_path_str, active_doc_name, active_key)
+    pipeline = load_pipeline(active_pdf_path_str, active_doc_name, active_key, cache_key="v4_gemini38")
 
 # ── Handle pipeline load errors ───────────────────────────────────────────────
 if isinstance(pipeline, FileNotFoundError):
@@ -265,13 +264,22 @@ if question:
 
     # Generate and display assistant response
     with st.chat_message("assistant"):
-        with st.spinner("🔎 Searching the document…"):
-            answer, documents, sources = ask_question(
-                question=question,
-                retriever=retriever,
-                llm=llm,
-                chat_history=st.session_state.messages,
-            )
+        with st.spinner("🔎 Searching the document & generating answer…"):
+            try:
+                answer, documents, sources = ask_question(
+                    question=question,
+                    retriever=retriever,
+                    llm=llm,
+                    chat_history=st.session_state.messages,
+                    api_key=active_key,
+                )
+            except Exception as exc:
+                err_text = str(exc)
+                if "429" in err_text or "RESOURCE_EXHAUSTED" in err_text or "quota" in err_text.lower():
+                    answer = "⚠️ **API Quota Exceeded**: The Gemini API free quota was reached. Please wait 60 seconds before trying again, or enter your own Gemini API key in the sidebar."
+                else:
+                    answer = f"⚠️ **Answer generation error**: {exc}"
+                documents, sources = [], []
 
         st.markdown(answer)
 

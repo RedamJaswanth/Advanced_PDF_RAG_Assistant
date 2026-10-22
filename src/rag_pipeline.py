@@ -5,7 +5,7 @@ Orchestrates the full Retrieval-Augmented Generation pipeline:
   1. Load & chunk the PDF
   2. Embed chunks into ChromaDB
   3. Retrieve relevant chunks for a user query
-  4. Generate a grounded answer via Google Gemini
+  4. Generate a grounded answer via Google Gemini 3.8 Flash
 """
 
 from __future__ import annotations
@@ -16,10 +16,11 @@ from typing import Any
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.document_loader import PDF_PATH, load_pdf, split_documents
 from src.embeddings import create_embeddings
-from src.llm import create_llm
+from src.llm import create_llm, get_api_key
 from src.vector_store import create_vector_store, get_retriever
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def create_rag_pipeline(
     pdf_path: str = PDF_PATH,
     api_key: str | None = None,
     persist_directory: str | None = None,
+    model: str = "gemini-3.8-flash",
 ) -> tuple[VectorStoreRetriever, BaseChatModel]:
     """
     Build the end-to-end RAG pipeline and return the retriever and LLM.
@@ -57,20 +59,22 @@ def create_rag_pipeline(
         Gemini API key. If None, read from environment or Streamlit secrets.
     persist_directory : str, optional
         Chroma persistence path. If None, runs in-memory.
+    model : str
+        Gemini model name (default: gemini-3.8-flash).
 
     Returns
     -------
     tuple[VectorStoreRetriever, BaseChatModel]
         (retriever, llm) — both ready for inference.
     """
-    logger.info("Initialising RAG pipeline for: %s", pdf_path)
+    logger.info("Initialising RAG pipeline for: %s with model %s", pdf_path, model)
 
     documents = load_pdf(pdf_path)
     chunks = split_documents(documents)
     embeddings = create_embeddings()
     vector_store = create_vector_store(chunks, embeddings, persist_directory=persist_directory)
     retriever = get_retriever(vector_store)
-    llm = create_llm(api_key=api_key)
+    llm = create_llm(model=model, api_key=api_key)
 
     logger.info("RAG pipeline ready.")
     return retriever, llm
@@ -83,25 +87,10 @@ def ask_question(
     retriever: VectorStoreRetriever,
     llm: BaseChatModel,
     chat_history: list[dict[str, Any]] | None = None,
+    api_key: str | None = None,
 ) -> tuple[str, list[Document], list[str]]:
     """
     Retrieve relevant context and generate a grounded answer.
-
-    Parameters
-    ----------
-    question : str
-        The user's current question.
-    retriever : VectorStoreRetriever
-        ChromaDB retriever loaded by create_rag_pipeline().
-    llm : BaseChatModel
-        Chat model loaded by create_rag_pipeline().
-    chat_history : list[dict], optional
-        Prior conversation turns as [{"role": ..., "content": ...}, ...].
-
-    Returns
-    -------
-    tuple[str, list[Document], list[str]]
-        (answer_text, retrieved_documents, deduplicated_page_sources)
     """
     if not question or not question.strip():
         return "Please enter a valid question.", [], []
@@ -111,7 +100,7 @@ def ask_question(
     # ── Format conversation history ────────────────────────────────────────────
     history_text = "\n".join(
         f"{turn['role'].capitalize()}: {turn['content']}"
-        for turn in chat_history[-6:]   # limit to last 6 turns
+        for turn in chat_history[-6:]
     )
 
     # ── Retrieve relevant chunks ───────────────────────────────────────────────
@@ -141,9 +130,37 @@ def ask_question(
         f"Answer:"
     )
 
-    # ── Generate answer ────────────────────────────────────────────────────────
+    # ── Generate answer with robust model fallback ─────────────────────────────
     logger.info("Generating answer...")
-    response = llm.invoke(prompt)
+    active_key = api_key or get_api_key()
+    candidate_models = ["gemini-3.8-flash", "gemini-1.5-flash"]
+
+    response = None
+    last_err = None
+
+    # First attempt with the provided llm instance
+    try:
+        response = llm.invoke(prompt)
+    except Exception as exc:
+        logger.warning("Initial LLM invoke failed: %s. Attempting fallback models...", exc)
+        last_err = exc
+        for candidate in candidate_models:
+            try:
+                fallback_llm = ChatGoogleGenerativeAI(
+                    model=candidate,
+                    temperature=0.2,
+                    google_api_key=active_key,
+                )
+                response = fallback_llm.invoke(prompt)
+                logger.info("Fallback succeeded with model: %s", candidate)
+                break
+            except Exception as e:
+                logger.warning("Fallback candidate %s failed: %s", candidate, e)
+                last_err = e
+
+    if response is None:
+        raise last_err or RuntimeError("Failed to generate response from Gemini.")
+
     raw_content = response.content
     if isinstance(raw_content, str):
         answer = raw_content
