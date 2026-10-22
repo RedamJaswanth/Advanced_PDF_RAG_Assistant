@@ -96,7 +96,7 @@ st.markdown(
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 📚 RAG Assistant")
-    st.markdown("Ask intelligent questions about your PDF using local AI — no cloud required.")
+    st.markdown("Ask intelligent questions about your PDF using Gemini AI.")
     st.divider()
 
     st.markdown("### ⚙️ System Configuration")
@@ -108,7 +108,7 @@ with st.sidebar:
     st.code("ChromaDB (local)", language=None)
 
     st.markdown("**🤖 Language Model**")
-    st.code("Qwen2.5:3B  (Ollama)", language=None)
+    st.code("Gemini 2.5 Flash", language=None)
 
     st.markdown("**🔗 Framework**")
     st.code("LangChain", language=None)
@@ -129,7 +129,7 @@ with st.sidebar:
         st.metric("Turns", len(st.session_state.get("messages", [])) // 2)
 
     st.divider()
-    st.caption("Built with LangChain · ChromaDB · Ollama · Streamlit")
+    st.caption("Built with LangChain · ChromaDB · Gemini · Streamlit")
 
 
 # ── Load RAG pipeline (cached across sessions) ────────────────────────────────
@@ -159,7 +159,7 @@ if isinstance(pipeline, Exception):
     st.error(
         f"**⚠️ Failed to initialise RAG pipeline.**\n\n"
         f"`{pipeline}`\n\n"
-        "Make sure Ollama is running: `ollama serve`"
+        "Check that GEMINI_API_KEY is set in your secrets."
     )
     st.stop()
 
@@ -174,7 +174,7 @@ st.markdown(
         <p>
             Ask any question about your document. The assistant retrieves the most
             relevant passages and generates a grounded, accurate answer using a
-            fully local AI stack — your data never leaves your machine.
+            Gemini-powered AI stack.
         </p>
     </div>
     """,
