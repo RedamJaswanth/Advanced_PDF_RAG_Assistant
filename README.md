@@ -1,6 +1,6 @@
 # 📚 Advanced PDF RAG Assistant
 
-[![Live Demo](https://img.shields.io/badge/Streamlit-Live%20Demo-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://advanced-pdf-rag-assistant.streamlit.app/)
+[![Live Demo](https://img.shields.io/badge/Streamlit-Live%20Demo-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://advancedpdfragassistant-7wgyvzwojqwtsohgpqqbp3.streamlit.app/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/RedamJaswanth/Advanced_PDF_RAG_Assistant)
 
 An intelligent Retrieval-Augmented Generation (RAG) assistant that allows users to upload any PDF document or query pre-indexed documents with factual, hallucination-free answers powered by **LangChain**, **Google Gemini 2.5 Flash**, **HuggingFace Embeddings**, and **ChromaDB**.
@@ -8,7 +8,7 @@ An intelligent Retrieval-Augmented Generation (RAG) assistant that allows users 
 ---
 
 ### 🌐 Live Demo
-👉 **[Open Live App on Streamlit Community Cloud](https://advanced-pdf-rag-assistant.streamlit.app/)**
+👉 **[Open Live App on Streamlit Community Cloud](https://advancedpdfragassistant-7wgyvzwojqwtsohgpqqbp3.streamlit.app/)**
 
 ---
 
