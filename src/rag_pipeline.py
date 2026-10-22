@@ -5,7 +5,7 @@ Orchestrates the full Retrieval-Augmented Generation pipeline:
   1. Load & chunk the PDF
   2. Embed chunks into ChromaDB
   3. Retrieve relevant chunks for a user query
-  4. Generate a grounded answer via Google Gemini 3.8 Flash
+  4. Generate a grounded answer via Google Gemini 3.5 Flash Lite
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def create_rag_pipeline(
     pdf_path: str = PDF_PATH,
     api_key: str | None = None,
     persist_directory: str | None = None,
-    model: str = "gemini-3.8-flash",
+    model: str = "gemini-3.5-flash-lite",
 ) -> tuple[VectorStoreRetriever, BaseChatModel]:
     """
     Build the end-to-end RAG pipeline and return the retriever and LLM.
@@ -60,7 +60,7 @@ def create_rag_pipeline(
     persist_directory : str, optional
         Chroma persistence path. If None, runs in-memory.
     model : str
-        Gemini model name (default: gemini-3.8-flash).
+        Gemini model name (default: gemini-3.5-flash-lite).
 
     Returns
     -------
@@ -133,7 +133,7 @@ def ask_question(
     # ── Generate answer with robust model fallback ─────────────────────────────
     logger.info("Generating answer...")
     active_key = api_key or get_api_key()
-    candidate_models = ["gemini-3.8-flash", "gemini-1.5-flash"]
+    candidate_models = ["gemini-3.5-flash-lite", "gemini-3.8-flash"]
 
     response = None
     last_err = None

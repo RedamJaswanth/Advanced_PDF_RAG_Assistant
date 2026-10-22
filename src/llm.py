@@ -15,8 +15,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-# gemini-3.8-flash is the current recommended production flash model by Google
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+# gemini-3.5-flash-lite provides high speed and standard free-tier quota limits
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 TEMPERATURE: float = 0.2  # Lower = more factual, grounded answers
 
 
@@ -53,7 +53,7 @@ def create_llm(
     Parameters
     ----------
     model : str, optional
-        Name of the Gemini model to use (default: gemini-3.8-flash).
+        Name of the Gemini model to use (default: gemini-3.5-flash-lite).
     temperature : float
         Sampling temperature (0 = deterministic, 1 = creative).
     api_key : str, optional

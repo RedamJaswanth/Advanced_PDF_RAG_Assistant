@@ -2,7 +2,7 @@
 app.py
 ------
 Streamlit frontend for the Advanced PDF RAG Assistant.
-Powered by Google Gemini 3.8 Flash, HuggingFace embeddings, and ChromaDB.
+Powered by Google Gemini 3.5 Flash Lite, HuggingFace embeddings, and ChromaDB.
 
 Run locally:
     streamlit run app.py
@@ -137,7 +137,7 @@ with st.sidebar:
     st.code("ChromaDB", language=None)
 
     st.markdown("**🤖 Language Model**")
-    st.code("gemini-3.8-flash (Google GenAI)", language=None)
+    st.code("gemini-3.5-flash-lite (Google GenAI)", language=None)
 
     st.markdown("**🔗 Framework**")
     st.code("LangChain", language=None)
@@ -168,10 +168,10 @@ with st.sidebar:
 
 # ── Load RAG pipeline (cache invalidated with cache_key) ──────────────────────
 @st.cache_resource(show_spinner="⚙️ Indexing PDF and initialising Gemini pipeline...")
-def load_pipeline(doc_path: str, doc_name: str, api_key: str | None = None, cache_key: str = "v4_gemini38"):
+def load_pipeline(doc_path: str, doc_name: str, api_key: str | None = None, cache_key: str = "v5_gemini35lite"):
     """Load and cache the retriever and LLM for the active document."""
     try:
-        return create_rag_pipeline(pdf_path=doc_path, api_key=api_key, model="gemini-3.8-flash")
+        return create_rag_pipeline(pdf_path=doc_path, api_key=api_key, model="gemini-3.5-flash-lite")
     except FileNotFoundError as exc:
         return exc
     except Exception as exc:
@@ -189,7 +189,7 @@ if not active_key:
     )
     pipeline = None
 else:
-    pipeline = load_pipeline(active_pdf_path_str, active_doc_name, active_key, cache_key="v4_gemini38")
+    pipeline = load_pipeline(active_pdf_path_str, active_doc_name, active_key, cache_key="v5_gemini35lite")
 
 # ── Handle pipeline load errors ───────────────────────────────────────────────
 if isinstance(pipeline, FileNotFoundError):
@@ -222,7 +222,7 @@ st.markdown(
         <p>
             Ask intelligent questions about <strong>{active_doc_name}</strong>.
             The assistant searches the indexed document using semantic embeddings
-            and synthesises accurate, grounded responses with <strong>Google Gemini 3.8 Flash</strong>.
+            and synthesises accurate, grounded responses with <strong>Google Gemini 3.5 Flash Lite</strong>.
         </p>
     </div>
     """,
