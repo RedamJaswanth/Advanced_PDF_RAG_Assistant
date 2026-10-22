@@ -5,7 +5,7 @@ Orchestrates the full Retrieval-Augmented Generation pipeline:
   1. Load & chunk the PDF
   2. Embed chunks into ChromaDB
   3. Retrieve relevant chunks for a user query
-  4. Generate a grounded answer via the local LLM
+  4. Generate a grounded answer via Google Gemini
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from src.document_loader import load_pdf, split_documents
+from src.document_loader import PDF_PATH, load_pdf, split_documents
 from src.embeddings import create_embeddings
 from src.llm import create_llm
 from src.vector_store import create_vector_store, get_retriever
@@ -41,31 +41,36 @@ Guidelines:
 
 # ── Pipeline factory ───────────────────────────────────────────────────────────
 
-def create_rag_pipeline() -> tuple[VectorStoreRetriever, BaseChatModel]:
+def create_rag_pipeline(
+    pdf_path: str = PDF_PATH,
+    api_key: str | None = None,
+    persist_directory: str | None = None,
+) -> tuple[VectorStoreRetriever, BaseChatModel]:
     """
     Build the end-to-end RAG pipeline and return the retriever and LLM.
 
-    Steps
-    -----
-    1. Load the PDF document.
-    2. Split it into overlapping chunks.
-    3. Embed chunks and store them in ChromaDB.
-    4. Create a similarity retriever over the vector store.
-    5. Load the local Ollama LLM.
+    Parameters
+    ----------
+    pdf_path : str
+        Path to the PDF file to index.
+    api_key : str, optional
+        Gemini API key. If None, read from environment or Streamlit secrets.
+    persist_directory : str, optional
+        Chroma persistence path. If None, runs in-memory.
 
     Returns
     -------
     tuple[VectorStoreRetriever, BaseChatModel]
         (retriever, llm) — both ready for inference.
     """
-    logger.info("Initialising RAG pipeline...")
+    logger.info("Initialising RAG pipeline for: %s", pdf_path)
 
-    documents = load_pdf()
+    documents = load_pdf(pdf_path)
     chunks = split_documents(documents)
     embeddings = create_embeddings()
-    vector_store = create_vector_store(chunks, embeddings)
+    vector_store = create_vector_store(chunks, embeddings, persist_directory=persist_directory)
     retriever = get_retriever(vector_store)
-    llm = create_llm()
+    llm = create_llm(api_key=api_key)
 
     logger.info("RAG pipeline ready.")
     return retriever, llm

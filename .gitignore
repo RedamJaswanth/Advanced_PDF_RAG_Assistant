@@ -18,5 +18,6 @@ chroma_db/
 .DS_Store
 Thumbs.db
 
-# PDF documents
-data/pdfs/*.pdf
+# PDF documents (ignore uploaded files, keep sample course notes)
+data/pdfs/*
+!data/pdfs/generative_ai_course_notes.pdf

@@ -25,10 +25,10 @@ SEARCH_TYPE: str = "similarity"
 def create_vector_store(
     chunks: list[Document],
     embeddings: Embeddings,
-    persist_directory: str = CHROMA_PATH,
+    persist_directory: str | None = None,
 ) -> Chroma:
     """
-    Build a ChromaDB vector store from document chunks and persist it to disk.
+    Build a ChromaDB vector store from document chunks.
 
     Parameters
     ----------
@@ -36,25 +36,32 @@ def create_vector_store(
         Chunked documents produced by split_documents().
     embeddings : Embeddings
         Embedding model used to encode each chunk.
-    persist_directory : str
-        Directory path where ChromaDB data will be saved.
+    persist_directory : str, optional
+        Directory path where ChromaDB data will be saved. If None, runs in-memory.
 
     Returns
     -------
     Chroma
-        A populated, persisted Chroma vector store instance.
+        A populated Chroma vector store instance.
     """
     logger.info(
-        "Creating ChromaDB vector store with %d chunk(s) at '%s'.",
+        "Creating ChromaDB vector store with %d chunk(s) (persist: %s).",
         len(chunks),
-        persist_directory,
+        persist_directory or "in-memory",
     )
-    vector_store = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory=persist_directory,
-    )
-    logger.info("ChromaDB vector store created and persisted successfully.")
+    if persist_directory:
+        vector_store = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory=persist_directory,
+        )
+    else:
+        vector_store = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+        )
+
+    logger.info("ChromaDB vector store created successfully.")
     return vector_store
 
 
